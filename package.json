@@ -1,0 +1,27 @@
+{
+  "name": "modelintellegentsystem-",
+  "version": "1.0.0",
+  "description": "Create chekers game with prolog (bot) and JS (from)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StrongerProgrammer7/ModelIntellegentSystem-.git"
+  },
+  "keywords": [
+    "SWI-Prolog",
+    "JS",
+    "chekers"
+  ],
+  "author": "Abduykov,Petrenko,Levin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/StrongerProgrammer7/ModelIntellegentSystem-/issues"
+  },
+  "homepage": "https://github.com/StrongerProgrammer7/ModelIntellegentSystem-#readme",
+  "dependencies": {
+    "tau-prolog": "^0.3.4"
+  }
+}
