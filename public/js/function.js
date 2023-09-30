@@ -26,81 +26,43 @@ function movePiece(e) //click mouse by piece and make step , this start
 
 function movePieceAI(oldPos,newPos,captured) // this start for AI
 {
-  //get coord row and col from board
     let p = new Piece(oldPos.row, oldPos.column);
 
-    if(captured > 0)
+    if(captured.row!==undefined )
     {
       //EAT enemy
-      enableToCaptureAI(p,newPost,captured);
+      enableToCaptureAI(newPos,oldPos,captured);
     }else
     {
       //Simple move
-      enableToMoveAI(p,newPos);
+      moveThePieceAI(newPos,oldPos);
     }
   
 }
 
-function enableToMoveAI(p) 
-  {
 
-    let find = false;
-    let newPosition = null;
-    // check if the case where the player play the selected piece can move on
-    posNewPosition.forEach((element) => {
-      if (element.compare(p)) {
-        find = true;
-        newPosition = element;
-        return;
-      }
-    });
-  
-    if (find) moveThePiece(newPosition);
-    else builBoard();
-  }
-
-  function enableToCaptureAI(p,newPost,captured) 
+  function enableToCaptureAI(newPos,oldPos,captured) 
   {
-    let find = false;
-    let pos = null;
-    capturedPosition.forEach((element) => 
-    {
-      if (element.newPosition.compare(p)) 
-      {
-        find = true;
-        pos = element.newPosition;
-        old = element.pieceCaptured;
-        return;
-      }
-    });
   
-    if (find) {
-      // if the current piece can move on, edit the board and rebuild
-      board[pos.row][pos.column] = currentPlayer; // move the piece
-      board[readyToMove.row][readyToMove.column] = 0; // delete the old position
-      // delete the piece that had been captured
-      board[old.row][old.column] = 0;
-  
-      // reinit ready to move value
+      board[newPos.row][newPos.col] = currentPlayer; 
+      board[oldPos.row][oldPos.col] = 0;
+      board[captured.row][captured.col] = 0; 
+ 
   
       readyToMove = null;
       capturedPosition = [];
       posNewPosition = [];
       displayCurrentPlayer();
       builBoard();
-      // check if there are possibility to capture other piece
       currentPlayer = reverse(currentPlayer);
-    } else 
-      builBoard();
-    
   }
   
 
-function moveThePieceAI(newPosition) 
+function moveThePieceAI(newPosition,oldPost) 
 {
   // if the current piece can move on, edit the board and rebuild
-  board[newPosition.row][newPosition.column] = currentPlayer;
-  board[readyToMove.row][readyToMove.column] = 0;
+  board[newPosition.row][newPosition.col] = currentPlayer;
+  board[oldPost.row][oldPost.col] = 0;
 
   // init value
   readyToMove = null;
@@ -168,7 +130,7 @@ function moveThePieceAI(newPosition)
     else builBoard();
   }
   
-  function moveThePiece(newPosition) 
+  async function moveThePiece(newPosition) 
   {
     // if the current piece can move on, edit the board and rebuild
     board[newPosition.row][newPosition.column] = currentPlayer;
@@ -186,11 +148,7 @@ function moveThePieceAI(newPosition)
     if(currentPlayer===enemy)
     {
       console.log('step enemy :>> ', currentPlayer);
-
-      //Send board AI
-      //Get board from AI 
-      //compare Board
-      //movePieceAI()
+      await moveEnemy();
     }
   }
   async function moveEnemy()
@@ -210,8 +168,8 @@ function moveThePieceAI(newPosition)
       .then(data =>
         {
           board = data.board;
-          let oldPos = { row: data.oldRow, col: data.oldCol};
-          let newPos = { row: data.Row, col: data.Col};
+          let oldPos = data.oldPos;
+          let newPos = data.newPos;
           let captured = data.captured;
           movePieceAI(oldPos,newPos,captured);
         })
