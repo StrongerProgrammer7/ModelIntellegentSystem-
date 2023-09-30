@@ -14,6 +14,7 @@ const app = express();
 app.use(express.json());
 app.use("/css",express.static(__dirname + "/public/css"));
 app.use("/js",express.static(__dirname + "/public/js"));
+app.use("/img",express.static(__dirname + "/public/img"));
 
 app.use('/',router);
 app.use('/api',controller);

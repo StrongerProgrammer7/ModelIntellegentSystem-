@@ -6,75 +6,28 @@ function movePiece(e) //click mouse by piece and make step , this start
     let piece = e.target;
     const row = parseInt(piece.getAttribute("row"));
     const column = parseInt(piece.getAttribute("column"));
-    let p = new Piece(row, column);
+    let p;
+    if(piece?.classList.contains("kingPlayer"))
+        p = new Piece(row, column,true);
+    else
+        p = new Piece(row, column,false);
   
-    if (capturedPosition.length > 0) {
-      enableToCapture(p);
-    } else {
-      if (posNewPosition.length > 0) {
+    if (capturedPosition.length > 0) 
+        enableToCapture(p);
+    else if (posNewPosition.length > 0) 
         enableToMove(p);
-      }
-    }
   
-    if (currentPlayer === board[row][column]) {
+    if (currentPlayer === board[row][column] || (currentPlayer === 1 && board[row][column]===10)) 
+    {
       let player = reverse(currentPlayer);
-      if (!findPieceCaptured(p, player)) {
+      if (!findPieceCaptured(p, player)) 
+      {
         findPossibleNewPosition(p, player);
       }
     }
 }
 
-function movePieceAI(oldPos,newPos,captured) // this start for AI
-{
-    let p = new Piece(oldPos.row, oldPos.column);
 
-    if(captured.row!==undefined )
-    {
-      //EAT enemy
-      enableToCaptureAI(newPos,oldPos,captured);
-    }else
-    {
-      //Simple move
-      moveThePieceAI(newPos,oldPos);
-    }
-  
-}
-
-
-  function enableToCaptureAI(newPos,oldPos,captured) 
-  {
-  
-      board[newPos.row][newPos.col] = currentPlayer; 
-      board[oldPos.row][oldPos.col] = 0;
-      board[captured.row][captured.col] = 0; 
- 
-  
-      readyToMove = null;
-      capturedPosition = [];
-      posNewPosition = [];
-      displayCurrentPlayer();
-      builBoard();
-      currentPlayer = reverse(currentPlayer);
-  }
-  
-
-function moveThePieceAI(newPosition,oldPost) 
-{
-  // if the current piece can move on, edit the board and rebuild
-  board[newPosition.row][newPosition.col] = currentPlayer;
-  board[oldPost.row][oldPost.col] = 0;
-
-  // init value
-  readyToMove = null;
-  posNewPosition = [];
-  capturedPosition = [];
-
-  currentPlayer = reverse(currentPlayer);
-
-  displayCurrentPlayer();
-  builBoard();
-
-}
   
   function enableToCapture(p) 
   {
@@ -91,9 +44,14 @@ function moveThePieceAI(newPosition,oldPost)
       }
     });
   
-    if (find) {
+    if (find) 
+    {
       // if the current piece can move on, edit the board and rebuild
-      board[pos.row][pos.column] = currentPlayer; // move the piece
+      if(pos.king)
+      {
+        board[pos.row][pos.column] = 10; 
+      }else
+        board[pos.row][pos.column] = currentPlayer; // move the piece
       board[readyToMove.row][readyToMove.column] = 0; // delete the old position
       // delete the piece that had been captured
       board[old.row][old.column] = 0;
@@ -117,8 +75,9 @@ function moveThePieceAI(newPosition,oldPost)
 
     let find = false;
     let newPosition = null;
-    // check if the case where the player play the selected piece can move on
-    posNewPosition.forEach((element) => {
+    // проверить, может ли игрок, играющий выбранной фигурой, двигаться дальше
+    posNewPosition.forEach((element) => 
+    {
       if (element.compare(p)) {
         find = true;
         newPosition = element;
@@ -126,14 +85,17 @@ function moveThePieceAI(newPosition,oldPost)
       }
     });
   
-    if (find) moveThePiece(newPosition);
+    if (find) moveThePiece(newPosition,p);
     else builBoard();
   }
   
-  async function moveThePiece(newPosition) 
+  async function moveThePiece(newPosition,isKing = false) 
   {
     // if the current piece can move on, edit the board and rebuild
-    board[newPosition.row][newPosition.column] = currentPlayer;
+    if(currentPlayer === 1 && (newPosition.row === 0 || newPosition.king))
+      board[newPosition.row][newPosition.column] = 10;
+    else
+      board[newPosition.row][newPosition.column] = currentPlayer;
     board[readyToMove.row][readyToMove.column] = 0;
   
     // init value
@@ -145,58 +107,80 @@ function moveThePieceAI(newPosition,oldPost)
   
     displayCurrentPlayer();
     builBoard();
-    if(currentPlayer===enemy)
-    {
-      console.log('step enemy :>> ', currentPlayer);
-      await moveEnemy();
-    }
+    // if(currentPlayer===enemy)
+    // {
+    //   console.log('step enemy :>> ', currentPlayer);
+    //   await moveEnemy();
+    // }
   }
-  async function moveEnemy()
-  {
-      const data =
-      {
-        board:board
-      };
-      await fetch("/api/stepAI",
-      {
-        method: 'POST',
-        headers:
-        {
-          'Content-Type': 'application/json'
-        }
-      }).then(data => data.json())
-      .then(data =>
-        {
-          board = data.board;
-          let oldPos = data.oldPos;
-          let newPos = data.newPos;
-          let captured = data.captured;
-          movePieceAI(oldPos,newPos,captured);
-        })
-  }
+  
   
   function findPossibleNewPosition(piece, player) 
   {
-    if (board[piece.row + player][piece.column + 1] === 0) {
-      readyToMove = piece;
-      markPossiblePosition(piece, player, 1);
+    let row = piece.row;
+    let col = piece.column;
+    if(player+2===1 && piece.king === true )
+    {
+      
+      if (row + 1  < board.length && col+1 < board[0].length && board[row + 1][col + 1] === 0) 
+      {
+        readyToMove = piece;
+        markPossiblePosition(piece, player, 1,{row:row+1,col:col+1});
+      }
+    
+      if (row + 1 < board.length && col-1 > 0 && board[row + 1][col - 1] === 0) 
+      {
+        readyToMove = piece;
+        markPossiblePosition(piece, player, -1,{row:row+1,col:col-1});
+      }
+      if ((row + player >= 0 && row + player < board.length) && (col+1 < board[0].length) && board[row + player][col + 1] === 0) {
+        readyToMove = piece;
+        markPossiblePosition(piece, player, 1,{row:row-1,col:col+1});
+      }
+    
+      if ((row + player >= 0 && row + player < board.length) && (col - 1 > 0) && board[row + player][col - 1] === 0) {
+        readyToMove = piece;
+        markPossiblePosition(piece, player, -1,{row:row-1,col:col-1});
+      }
+    }else
+    {
+      if ((row + player >= 0 && row + player < board.length) && (col+1 < board[0].length) && board[row + player][col + 1] === 0) {
+        readyToMove = piece;
+        markPossiblePosition(piece, player, 1);
+      }
+    
+      if ((row + player >= 0 && row + player < board.length) && (col - 1 > 0) && board[row + player][col - 1] === 0) {
+        readyToMove = piece;
+        markPossiblePosition(piece, player, -1);
+      }
     }
-  
-    if (board[piece.row + player][piece.column - 1] === 0) {
-      readyToMove = piece;
-      markPossiblePosition(piece, player, -1);
-    }
+    
   }
   
-  function markPossiblePosition(p, player = 0, direction = 0) {
-    attribute = parseInt(p.row + player) + "-" + parseInt(p.column + direction);
+  function markPossiblePosition(p, player = 0, direction = 0,dirKing={}) 
+  {
+    if(p.king === true)
+    {
+      attribute = parseInt(dirKing.row) + "-" + parseInt(dirKing.col);
   
-    position = document.querySelector("[data-position='" + attribute + "']");
-    if (position) {
-      position.style.background = "green";
-      // // save where it can move
-      posNewPosition.push(new Piece(p.row + player, p.column + direction));
+      position = document.querySelector("[data-position='" + attribute + "']");
+      if (position) {
+        position.style.background = "green";
+        // // save where it can move
+        posNewPosition.push(new Piece(dirKing.row, dirKing.col,true));
+      }
+    }else
+    {
+      attribute = parseInt(p.row + player) + "-" + parseInt(p.column + direction);
+  
+      position = document.querySelector("[data-position='" + attribute + "']");
+      if (position) {
+        position.style.background = "green";
+        // // save where it can move
+        posNewPosition.push(new Piece(p.row + player, p.column + direction));
+      }
     }
+    
   }
   
   function builBoard() 
@@ -233,8 +217,14 @@ function moveThePieceAI(newPosition,oldPost)
         }
   
         // добавьте шашку, если ящик не пуст
-        if (board[i][j] === 1) 
-            occupied = "whitePiece";
+        if (board[i][j] === 1 || board[i][j] === 10) 
+        {
+          occupied = "whitePiece";
+          if(board[i][j] === 10)
+          {
+            occupied = occupied.concat(" kingPlayer");
+          }
+        }
         else if (board[i][j] === -1) 
             occupied = "blackPiece";
         else 
@@ -260,7 +250,7 @@ function moveThePieceAI(newPosition,oldPost)
         if (board[i][j] === -1) 
         {
           black++;
-        } else if (board[i][j] === 1) 
+        } else if (board[i][j] === 1 || board[i][j] === 10) 
         {
           white++;
         }
@@ -280,23 +270,28 @@ function moveThePieceAI(newPosition,oldPost)
 
 
   
-  function displayCurrentPlayer() {
+  function displayCurrentPlayer() 
+  {
     var container = document.getElementById("next-player");
-    if (container?.classList.contains("whitePiece")) {
+    if (container?.classList.contains("whitePiece")) 
+    {
       container.setAttribute("class", "occupied blackPiece ");
-    } else {
+    } else 
+    {
       container.setAttribute("class", "occupied whitePiece");
     }
   }
   
-  function findPieceCaptured(p, player) {
+function findPieceCaptured(p, player) 
+{
     let found = false;
     let column = p.column;
     let row = p.row;
     let countRow = board.length;
     let countCol = board[0].length;
     let pieceCaptured = null;
-    if (((row - 1 >= 0 && column -1 >=0) || (row - 2 >= 0 && column - 2 >=0) ) &&
+
+    if (((row - 1 >= 0 && column -1 >=0) && (row - 2 >= 0 && column - 2 >=0) ) &&
       board[row - 1][column - 1] === player &&
       board[row - 2][column - 2] === 0
     ) {
@@ -306,7 +301,7 @@ function moveThePieceAI(newPosition,oldPost)
       pieceCaptured = new Piece(p.row - 1, p.column - 1);
     }
   
-    if (((row - 1 >= 0 && column + 1 < countCol) || (row - 2 >= 0 && column  + 2 < countCol)) &&
+    if (((row - 1 >= 0 && column + 1 < countCol) && (row - 2 >= 0 && column  + 2 < countCol)) &&
       board[row - 1][column + 1] === player &&
       board[row - 2][column + 2] === 0
     ) {
@@ -316,7 +311,7 @@ function moveThePieceAI(newPosition,oldPost)
       pieceCaptured = new Piece(p.row - 1, p.column + 1);
     }
   
-    if (((row + 1 < countRow && column - 1 >= 0) || (row + 2 < countRow && column  - 2 >= 0)) &&
+    if (((row + 1 < countRow && column - 1 >= 0) && (row + 2 < countRow && column  - 2 >= 0)) &&
       board[row + 1][column - 1] === player &&
       board[row + 2][column - 2] === 0
     ) {
@@ -326,7 +321,7 @@ function moveThePieceAI(newPosition,oldPost)
       pieceCaptured = new Piece(p.row + 1, p.column - 1);
     }
   
-    if (((row + 1 < countRow && column + 1 < countCol) || (row + 2 < countRow && column  + 2 < countCol)) &&
+    if (((row + 1 < countRow && column + 1 < countCol) && (row + 2 < countRow && column  + 2 < countCol)) &&
       board[row + 1][column + 1] === player &&
       board[row + 2][column + 2] === 0
     ) {
