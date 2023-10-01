@@ -1,25 +1,26 @@
 // @ts-nocheck
 function movePieceAI(oldPos,newPos,captured) // this start for AI
 {
-    let p = new Piece(oldPos.row, oldPos.column);
+    let king = board[newPos.row][newPos.col] === -10;
+    let p = new Piece(oldPos.row, oldPos.column,king);
 
     if(captured.row!==undefined )
     {
       //EAT enemy
-      enableToCaptureAI(newPos,oldPos,captured);
+      enableToCaptureAI(newPos,oldPos,captured,king);
     }else
     {
       //Simple move
-      moveThePieceAI(newPos,oldPos);
+      moveThePieceAI(newPos,oldPos,king);
     }
   
 }
 
 
-  function enableToCaptureAI(newPos,oldPos,captured) 
+  function enableToCaptureAI(newPos,oldPos,captured,king) 
   {
   
-      board[newPos.row][newPos.col] = currentPlayer; 
+      board[newPos.row][newPos.col] = king === false ? currentPlayer : -10; 
       board[oldPos.row][oldPos.col] = 0;
       board[captured.row][captured.col] = 0; 
  
@@ -27,8 +28,7 @@ function movePieceAI(oldPos,newPos,captured) // this start for AI
       readyToMove = null;
       capturedPosition = [];
       posNewPosition = [];
-      displayCurrentPlayer();
-      builBoard();
+      rePaint();
       currentPlayer = reverse(currentPlayer);
   }
   
@@ -36,7 +36,7 @@ function movePieceAI(oldPos,newPos,captured) // this start for AI
 function moveThePieceAI(newPosition,oldPost) 
 {
   // if the current piece can move on, edit the board and rebuild
-  board[newPosition.row][newPosition.col] = currentPlayer;
+  board[newPosition.row][newPosition.col] = king === false ? currentPlayer : -10;
   board[oldPost.row][oldPost.col] = 0;
 
   // init value
@@ -46,8 +46,7 @@ function moveThePieceAI(newPosition,oldPost)
 
   currentPlayer = reverse(currentPlayer);
 
-  displayCurrentPlayer();
-  builBoard();
+  rePaint();
 
 }
 

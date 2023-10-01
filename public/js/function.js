@@ -61,8 +61,7 @@ function movePiece(e) //click mouse by piece and make step , this start
       readyToMove = null;
       capturedPosition = [];
       posNewPosition = [];
-      displayCurrentPlayer();
-      builBoard();
+      rePaint();
       // check if there are possibility to capture other piece
       currentPlayer = reverse(currentPlayer);
     } else 
@@ -86,7 +85,10 @@ function movePiece(e) //click mouse by piece and make step , this start
     });
   
     if (find) moveThePiece(newPosition,p);
-    else builBoard();
+    else{
+      posNewPosition = [];
+      builBoard();
+    }
   }
   
   async function moveThePiece(newPosition,isKing = false) 
@@ -105,8 +107,7 @@ function movePiece(e) //click mouse by piece and make step , this start
   
     currentPlayer = reverse(currentPlayer);
   
-    displayCurrentPlayer();
-    builBoard();
+    rePaint();
     // if(currentPlayer===enemy)
     // {
     //   console.log('step enemy :>> ', currentPlayer);
@@ -138,18 +139,18 @@ function movePiece(e) //click mouse by piece and make step , this start
         markPossiblePosition(piece, player, 1,{row:row-1,col:col+1});
       }
     
-      if ((row + player >= 0 && row + player < board.length) && (col - 1 > 0) && board[row + player][col - 1] === 0) {
+      if ((row + player >= 0 && row + player < board.length) && (col - 1 >= 0) && board[row + player][col - 1] === 0) {
         readyToMove = piece;
         markPossiblePosition(piece, player, -1,{row:row-1,col:col-1});
       }
-    }else
+    }else if((row + player >= 0 && row + player < board.length))
     {
-      if ((row + player >= 0 && row + player < board.length) && (col+1 < board[0].length) && board[row + player][col + 1] === 0) {
+      if (col+1 < board[0].length && board[row + player][col + 1] === 0) {
         readyToMove = piece;
         markPossiblePosition(piece, player, 1);
       }
     
-      if ((row + player >= 0 && row + player < board.length) && (col - 1 > 0) && board[row + player][col - 1] === 0) {
+      if (col - 1 >= 0 && board[row + player][col - 1] === 0) {
         readyToMove = piece;
         markPossiblePosition(piece, player, -1);
       }
@@ -290,55 +291,65 @@ function findPieceCaptured(p, player)
     let countRow = board.length;
     let countCol = board[0].length;
     let pieceCaptured = null;
-
+    let arrPos = [];
+    let arrCap = [];
     if (((row - 1 >= 0 && column -1 >=0) && (row - 2 >= 0 && column - 2 >=0) ) &&
-      board[row - 1][column - 1] === player &&
+ (board[row - 1][column - 1] === player || board[row - 1][column - 1] === 10) &&
       board[row - 2][column - 2] === 0
     ) {
       found = true;
-      newPosition = new Piece(p.row - 2, p.column - 2);
+      arrPos.push(new Piece(p.row - 2, p.column - 2,p.king));
       // save the new position and the opponent's piece position
-      pieceCaptured = new Piece(p.row - 1, p.column - 1);
+      arrCap.push(new Piece(p.row - 1, p.column - 1,p.king));
     }
   
     if (((row - 1 >= 0 && column + 1 < countCol) && (row - 2 >= 0 && column  + 2 < countCol)) &&
-      board[row - 1][column + 1] === player &&
+      (board[row - 1][column + 1] === player || board[row - 1][column + 1] === 10)  &&
       board[row - 2][column + 2] === 0
     ) {
       found = true;
-      newPosition = new Piece(p.row - 2, p.column + 2);
+      arrPos.push(new Piece(p.row - 2, p.column + 2,p.king));
       // save the new position and the opponent's piece position
-      pieceCaptured = new Piece(p.row - 1, p.column + 1);
+      arrCap.push(new Piece(p.row - 1, p.column + 1,p.king));
     }
   
     if (((row + 1 < countRow && column - 1 >= 0) && (row + 2 < countRow && column  - 2 >= 0)) &&
-      board[row + 1][column - 1] === player &&
+      (board[row + 1][column - 1] === player || board[row + 1][column - 1] === 10) &&
       board[row + 2][column - 2] === 0
     ) {
       found = true;
-      newPosition = new Piece(p.row + 2, p.column - 2);
+      arrPos.push(new Piece(p.row + 2, p.column - 2,p.king));
       // save the new position and the opponent's piece position
-      pieceCaptured = new Piece(p.row + 1, p.column - 1);
+      arrCap.push(new Piece(p.row + 1, p.column - 1,p.king));
     }
   
     if (((row + 1 < countRow && column + 1 < countCol) && (row + 2 < countRow && column  + 2 < countCol)) &&
-      board[row + 1][column + 1] === player &&
+      (board[row + 1][column + 1] === player || board[row + 1][column + 1] === 10)  &&
       board[row + 2][column + 2] === 0
     ) {
       found = true;
-      newPosition = new Piece(p.row + 2, p.column + 2);
+      arrPos.push(new Piece(p.row + 2, p.column + 2,p.king));
       
       // save the new position and the opponent's piece position
-      pieceCaptured = new Piece(p.row + 1, p.column + 1);
+      arrCap.push(new Piece(p.row + 1, p.column + 1,p.king));
     }
     if(found)
     {
         readyToMove = p;
-        markPossiblePosition(newPosition);
-        capturedPosition.push({
-            newPosition: newPosition,
-            pieceCaptured: pieceCaptured,
+        let dirKing = {};
+        
+        for(let i =0;i<arrPos.length;i++)
+        {
+          if(p.king)
+            dirKing = {row: arrPos[i].row, col:arrPos[i].column};
+          markPossiblePosition(arrPos[i],0,0,dirKing);
+          capturedPosition.push({
+            newPosition: arrPos[i],
+            pieceCaptured: arrCap[i],
           });
+        }
+        
+       
     }
     
     return found;
@@ -368,3 +379,9 @@ function findPieceCaptured(p, player)
   {
     return player === -1 ? 1 : -1;
   }
+
+function rePaint()
+{
+  displayCurrentPlayer();
+  builBoard();
+}
