@@ -2,7 +2,6 @@
 :- use_module(library(random)).
 
 
-
 valid_piece(Board, X, Y, Piece) :-
     nth0(X, Board, Row),
     nth0(Y, Row, Piece),
@@ -52,7 +51,7 @@ recordNewRow([],[]).
 recordNewRow([H|T],[H1|T1]):-
 	H1 is H,
 	recordNewRow(T,T1).
-
+	
 extract_values([X1, X2, X3, X4], X1, X2, X3, X4).
 check_stepFromRow(Row,Board):-
 	extract_values(Row,X,Y,X1,_),
@@ -60,6 +59,7 @@ check_stepFromRow(Row,Board):-
 	(Piece = -1, X < X1 ; Piece = -10). 
 	
 check_steps([],[],_).
+check_steps([],[_,_],_).
 check_steps([Row|T],[R1|T1],Board):-
 	check_stepFromRow(Row,Board) -> recordNewRow(Row,R1), check_steps(T,T1,Board) 
 	;
@@ -76,11 +76,12 @@ make_random_move(Board, NewBoard) :-
 	find_row_index(Steps,Index),
 	(-1 is Index ->
 		check_steps(Steps,NewSteps,Board),
+		delete(NewSteps,ClearSteps),
 		% Randomly select a move from the list of legal moves.
-		length(NewSteps, NumSteps),
+		length(ClearSteps, NumSteps),
 		random(0, NumSteps, Index2),
 		
-		nth0(Index2, NewSteps, [X, Y, NewX, NewY]),!
+		nth0(Index2, ClearSteps, [X, Y, NewX, NewY]),!
 		;
 		nth0(Index, Steps, [X, Y, NewX, NewY]),!
 	),
@@ -113,6 +114,12 @@ select_and_move(Board, X, Y, NewX, NewY, NewBoard) :-
     % Check if a piece of the opponent is at the position to be captured.
     valid_piece_white(Board, CapturedX, CapturedY),
 	valid_piece(Board, X, Y,Piece),
+	King is Piece,
+	(NewX = 9,Piece = -1 -> 
+		King is -10
+	;
+		true
+	),
     % Update the board after capturing the opponent's piece.
     update_mat_rc(Board, X, Y, 0, TempBoard),
     update_mat_rc(TempBoard, CapturedX, CapturedY, 0, TempBoard2),
@@ -126,9 +133,15 @@ select_and_move(Board, X, Y, NewX, NewY, NewBoard) :-
     % Ensure the destination square is empty.
     valid_piece_zero(Board, NewX, NewY),
 	valid_piece(Board, X, Y,Piece),
+	King is Piece,
+	(NewX = 9,Piece = -1 -> 
+		King is -10
+	;
+		true
+	),
     % Update the board for the regular move.
     update_mat_rc(Board, X, Y, 0, TempBoard),
-    update_mat_rc(TempBoard, NewX, NewY, Piece, NewBoard).
+    update_mat_rc(TempBoard, NewX, NewY, King, NewBoard).
 
 
 
