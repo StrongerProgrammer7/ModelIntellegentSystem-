@@ -3,6 +3,10 @@ let old = null;
 
 function movePiece(e) //click mouse by piece and make step , this start
 {
+  if(access === false)
+  {
+    return;
+  }
     let piece = e.target;
     const row = parseInt(piece.getAttribute("row"));
     const column = parseInt(piece.getAttribute("column"));
@@ -16,15 +20,19 @@ function movePiece(e) //click mouse by piece and make step , this start
         enableToCapture(p);
     else if (posNewPosition.length > 0) 
         enableToMove(p);
-  
-    if (currentPlayer === board[row][column] || (currentPlayer === 1 && board[row][column]===10)) 
+
+    if(access)
     {
-      let player = reverse(currentPlayer);
-      if (!findPieceCaptured(p, player)) 
+      if (currentPlayer === board[row][column] || (currentPlayer === 1 && board[row][column]===10)) 
       {
-        findPossibleNewPosition(p, player);
+        let player = reverse(currentPlayer);
+        if (!findPieceCaptured(p, player)) 
+        {
+          findPossibleNewPosition(p, player);
+        }
       }
     }
+   
 }
 
 
@@ -63,7 +71,8 @@ function movePiece(e) //click mouse by piece and make step , this start
       posNewPosition = [];
       rePaint();
       // check if there are possibility to capture other piece
-      currentPlayer = reverse(currentPlayer);
+     // currentPlayer = reverse(currentPlayer);
+      moveAi();
     } else 
       builBoard();
     
@@ -90,9 +99,39 @@ function movePiece(e) //click mouse by piece and make step , this start
       builBoard();
     }
   }
-  
-  async function moveThePiece(newPosition,isKing = false) 
+function moveAi()
+{
+  access = false;
+ 
+  if(access === false)
   {
+    console.log('step enemy :>> ', currentPlayer);
+    
+    
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST","/api/stepAI",[false]);
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.send(JSON.stringify({board:board}));
+    xhr.onload = function() {
+      console.log(`Loaded: ${xhr.status}`);
+      board = JSON.parse(xhr.response).board;
+      console.log(board);
+      //currentPlayer = reverse(currentPlayer);
+      access = true;
+      builBoard();
+    };
+    
+    xhr.onerror = function() { // only triggers if the request couldn't be made at all
+      alert(`Network Error`);
+    };
+    
+
+
+  }
+}
+  function moveThePiece(newPosition,isKing = false) 
+  {
+   
     // if the current piece can move on, edit the board and rebuild
     if(currentPlayer === 1 && (newPosition.row === 0 || newPosition.king))
       board[newPosition.row][newPosition.column] = 10;
@@ -105,16 +144,12 @@ function movePiece(e) //click mouse by piece and make step , this start
     posNewPosition = [];
     capturedPosition = [];
   
-    currentPlayer = reverse(currentPlayer);
-  
-    rePaint();
-    // if(currentPlayer===enemy)
-    // {
-    //   console.log('step enemy :>> ', currentPlayer);
-    //   await moveEnemy();
-    // }
+    //currentPlayer = reverse(currentPlayer);
+    builBoard();
+    moveAi();
   }
   
+
   
   function findPossibleNewPosition(piece, player) 
   {
@@ -226,8 +261,14 @@ function movePiece(e) //click mouse by piece and make step , this start
             occupied = occupied.concat(" kingPlayer");
           }
         }
-        else if (board[i][j] === -1) 
-            occupied = "blackPiece";
+        else if (board[i][j] === -1 || board[i][j] === -10) 
+        {
+          occupied = "blackPiece";
+          if(board[i][j] === -10)
+          {
+            occupied = occupied.concat(" kingPiece");
+          }
+        }
         else 
             occupied = "empty";
         
@@ -248,7 +289,7 @@ function movePiece(e) //click mouse by piece and make step , this start
         row.appendChild(col);
   
         // counter number of each piece
-        if (board[i][j] === -1) 
+        if (board[i][j] === -1 || board[i][j] === -10) 
         {
           black++;
         } else if (board[i][j] === 1 || board[i][j] === 10) 
@@ -380,7 +421,7 @@ function findPieceCaptured(p, player)
     return player === -1 ? 1 : -1;
   }
 
-function rePaint()
+async function rePaint()
 {
   displayCurrentPlayer();
   builBoard();

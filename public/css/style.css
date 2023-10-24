@@ -243,3 +243,9 @@ body
   background: url("../img/1.png");
   background-size: cover;
 }
+
+.kingPiece
+{
+  background: red;
+  background-size: cover;
+}

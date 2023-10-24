@@ -24,7 +24,7 @@ function movePieceAI(oldPos,newPos,captured) // this start for AI
       board[oldPos.row][oldPos.col] = 0;
       board[captured.row][captured.col] = 0; 
  
-  
+
       readyToMove = null;
       capturedPosition = [];
       posNewPosition = [];
@@ -50,26 +50,35 @@ function moveThePieceAI(newPosition,oldPost)
 
 }
 
-async function moveEnemy()
+function moveEnemy()
   {
-      const data =
+      try 
       {
-        board:board
-      };
-      await fetch("/api/stepAI",
-      {
-        method: 'POST',
-        headers:
+        
+        const data =
         {
-          'Content-Type': 'application/json'
-        }
-      }).then(data => data.json())
-      .then(data =>
+          board:board
+        };
+        board = await fetch("/api/stepAI",
         {
-          board = data.board;
-          let oldPos = data.oldPos;
-          let newPos = data.newPos;
-          let captured = data.captured;
-          movePieceAI(oldPos,newPos,captured);
-        })
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers:
+          {
+            'Content-Type': 'application/json'
+          }
+        }).then(data => data.json())
+        .then(async data =>
+          {
+            console.log(`End fetch`);
+            return await data.board;
+           
+            // let oldPos = data.oldPos;
+            // let newPos = data.newPos;
+            // let captured = data.captured;
+          });
+
+      } catch (error) {
+        console.log(error);
+      }
   }
