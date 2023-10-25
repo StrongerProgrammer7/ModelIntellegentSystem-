@@ -15,7 +15,7 @@ let s = async() => {
     const matr = convertMatrixToList(arr);
 
     const goal = `double_matrix(${matr},X).`;
-
+    console.log(goal);
     await session.promiseConsult("./backend/code_prolog.pl");
     await session.promiseQuery(goal);
 
