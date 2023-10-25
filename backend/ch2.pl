@@ -2,6 +2,7 @@
 :- use_module(library(random)).
 
 
+
 valid_piece(Board, X, Y, Piece) :-
     nth0(X, Board, Row),
     nth0(Y, Row, Piece),
@@ -20,6 +21,7 @@ update_mat_rc(Mc,R,C,V,Mu) :-
     nth0(C,Rc,_,Rt),
     nth0(C,Ru,V,Rt),
     nth0(R,Mu,Ru,Mt).
+	
 % Predicate to delete duplicate rows from a matrix.
 delete_duplicate_rows(Matrix, Result) :-
     delete_duplicate_rows(Matrix, [], Result).
@@ -51,6 +53,13 @@ recordNewRow([],[]).
 recordNewRow([H|T],[H1|T1]):-
 	H1 is H,
 	recordNewRow(T,T1).
+
+
+delete_empty_lists([], []).
+delete_empty_lists([[] | Rest], Result) :- delete_empty_lists(Rest, Result).
+delete_empty_lists([Head | Rest], [Head | Result]) :- 
+    Head \= [], 
+    delete_empty_lists(Rest, Result).
 	
 extract_values([X1, X2, X3, X4], X1, X2, X3, X4).
 check_stepFromRow(Row,Board):-
@@ -59,7 +68,9 @@ check_stepFromRow(Row,Board):-
 	(Piece = -1, X < X1 ; Piece = -10). 
 	
 check_steps([],[],_).
-check_steps([],[_,_],_).
+check_steps([],[R1,T1],_):-
+	R1 = [],
+	check_steps([],T1,_).
 check_steps([Row|T],[R1|T1],Board):-
 	check_stepFromRow(Row,Board) -> recordNewRow(Row,R1), check_steps(T,T1,Board) 
 	;
@@ -76,7 +87,7 @@ make_random_move(Board, NewBoard) :-
 	find_row_index(Steps,Index),
 	(-1 is Index ->
 		check_steps(Steps,NewSteps,Board),
-		delete(NewSteps,ClearSteps),
+		delete_empty_lists(NewSteps,ClearSteps),
 		% Randomly select a move from the list of legal moves.
 		length(ClearSteps, NumSteps),
 		random(0, NumSteps, Index2),
@@ -86,7 +97,6 @@ make_random_move(Board, NewBoard) :-
 		nth0(Index, Steps, [X, Y, NewX, NewY]),!
 	),
 
-    %nth0(Index, Steps, [X, Y, NewX, NewY]),
 
     % Apply the selected move to the board.
     apply_move(Board, X, Y, NewX, NewY, NewBoard),!.
@@ -103,7 +113,7 @@ legal_move(Board, X, Y, NewX, NewY) :-
 apply_move(Board, X, Y, NewX, NewY, NewBoard) :-
     select_and_move(Board, X, Y, NewX, NewY, NewBoard).
 
-% Define your own select_and_move logic for checkers here.
+
 % Define your own select_and_move logic for basic checkers.
 select_and_move(Board, X, Y, NewX, NewY, NewBoard) :-
     % Check if the move is a capture.
@@ -114,16 +124,14 @@ select_and_move(Board, X, Y, NewX, NewY, NewBoard) :-
     % Check if a piece of the opponent is at the position to be captured.
     valid_piece_white(Board, CapturedX, CapturedY),
 	valid_piece(Board, X, Y,Piece),
-	King is Piece,
+	valid_piece(Board, X, Y,Piece),
+	update_mat_rc(Board, X, Y, 0, TempBoard),
+	update_mat_rc(TempBoard, CapturedX, CapturedY, 0, TempBoard2),
 	(NewX = 9,Piece = -1 -> 
-		King is -10
+		update_mat_rc(TempBoard2, NewX, NewY, -10, NewBoard)
 	;
-		true
-	),
-    % Update the board after capturing the opponent's piece.
-    update_mat_rc(Board, X, Y, 0, TempBoard),
-    update_mat_rc(TempBoard, CapturedX, CapturedY, 0, TempBoard2),
-    update_mat_rc(TempBoard2, NewX, NewY, Piece, NewBoard).
+		update_mat_rc(TempBoard2, NewX, NewY, Piece, NewBoard)
+	).
 
 % If it's not a capture, it's a regular move.
 select_and_move(Board, X, Y, NewX, NewY, NewBoard) :-
@@ -133,15 +141,12 @@ select_and_move(Board, X, Y, NewX, NewY, NewBoard) :-
     % Ensure the destination square is empty.
     valid_piece_zero(Board, NewX, NewY),
 	valid_piece(Board, X, Y,Piece),
-	King is Piece,
+	update_mat_rc(Board, X, Y, 0, TempBoard),
 	(NewX = 9,Piece = -1 -> 
-		King is -10
+		update_mat_rc(TempBoard, NewX, NewY, -10, NewBoard)
 	;
-		true
-	),
-    % Update the board for the regular move.
-    update_mat_rc(Board, X, Y, 0, TempBoard),
-    update_mat_rc(TempBoard, NewX, NewY, King, NewBoard).
+		update_mat_rc(TempBoard, NewX, NewY, Piece, NewBoard)
+	).
 
 
 
@@ -188,5 +193,8 @@ valid_move(Board, X, Y, NewX, NewY) :-
 
 main(Board,X) :-
     make_random_move(Board, X),!.
+
+
+
 
 
