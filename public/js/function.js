@@ -54,17 +54,17 @@ function movePiece(e) //click mouse by piece and make step , this start
   
     if (find) 
     {
-      // if the current piece can move on, edit the board and rebuild
-      if(pos.king)
+
+      if(pos.king || pos.row === 0)
       {
         board[pos.row][pos.column] = 10; 
       }else
-        board[pos.row][pos.column] = currentPlayer; // move the piece
-      board[readyToMove.row][readyToMove.column] = 0; // delete the old position
-      // delete the piece that had been captured
+        board[pos.row][pos.column] = currentPlayer; 
+        
+      board[readyToMove.row][readyToMove.column] = 0;
+
       board[old.row][old.column] = 0;
   
-      // reinit ready to move value
   
       readyToMove = null;
       capturedPosition = [];
@@ -72,7 +72,8 @@ function movePiece(e) //click mouse by piece and make step , this start
       rePaint();
       // check if there are possibility to capture other piece
      // currentPlayer = reverse(currentPlayer);
-      moveAi();
+     if(modal.classList.contains("effect") === false)
+        moveAi();
     } else 
       builBoard();
     
@@ -115,10 +116,20 @@ function moveAi()
     xhr.onload = function() {
       console.log(`Loaded: ${xhr.status}`);
       board = JSON.parse(xhr.response).board;
-      console.log(board);
-      //currentPlayer = reverse(currentPlayer);
-      access = true;
-      builBoard();
+      if(JSON.parse(xhr.response).message)
+      {
+        access = true;
+
+        rePaint();
+        modalOpen(0);
+      }else
+      {
+        console.log(board);
+        //currentPlayer = reverse(currentPlayer);
+        access = true;
+        rePaint();
+      }
+      
     };
     
     xhr.onerror = function() { // only triggers if the request couldn't be made at all
@@ -145,8 +156,9 @@ function moveAi()
     capturedPosition = [];
   
     //currentPlayer = reverse(currentPlayer);
-    builBoard();
-    moveAi();
+    rePaint();
+    if(modal.classList.contains("effect") === false)
+      moveAi();
   }
   
 
@@ -335,7 +347,7 @@ function findPieceCaptured(p, player)
     let arrPos = [];
     let arrCap = [];
     if (((row - 1 >= 0 && column -1 >=0) && (row - 2 >= 0 && column - 2 >=0) ) &&
- (board[row - 1][column - 1] === player || board[row - 1][column - 1] === 10) &&
+ (board[row - 1][column - 1] === player || board[row - 1][column - 1] === -10) &&
       board[row - 2][column - 2] === 0
     ) {
       found = true;
@@ -345,7 +357,7 @@ function findPieceCaptured(p, player)
     }
   
     if (((row - 1 >= 0 && column + 1 < countCol) && (row - 2 >= 0 && column  + 2 < countCol)) &&
-      (board[row - 1][column + 1] === player || board[row - 1][column + 1] === 10)  &&
+      (board[row - 1][column + 1] === player || board[row - 1][column + 1] === -10)  &&
       board[row - 2][column + 2] === 0
     ) {
       found = true;
@@ -355,7 +367,7 @@ function findPieceCaptured(p, player)
     }
   
     if (((row + 1 < countRow && column - 1 >= 0) && (row + 2 < countRow && column  - 2 >= 0)) &&
-      (board[row + 1][column - 1] === player || board[row + 1][column - 1] === 10) &&
+      (board[row + 1][column - 1] === player || board[row + 1][column - 1] === -10) &&
       board[row + 2][column - 2] === 0
     ) {
       found = true;
@@ -365,7 +377,7 @@ function findPieceCaptured(p, player)
     }
   
     if (((row + 1 < countRow && column + 1 < countCol) && (row + 2 < countRow && column  + 2 < countCol)) &&
-      (board[row + 1][column + 1] === player || board[row + 1][column + 1] === 10)  &&
+      (board[row + 1][column + 1] === player || board[row + 1][column + 1] === -10)  &&
       board[row + 2][column + 2] === 0
     ) {
       found = true;

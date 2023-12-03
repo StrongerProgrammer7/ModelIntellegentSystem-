@@ -2,7 +2,6 @@
 :- use_module(library(random)).
 
 
-
 valid_piece(Board, X, Y, Piece) :-
     nth0(X, Board, Row),
     nth0(Y, Row, Piece),
@@ -42,7 +41,7 @@ find_row_index(Matrix, Index) :-
 % Base case: The matrix is empty, and the difference was not found, return -1.
 find_row_index([], _, -1).
 
-% Recursive case: Process each row in the matrix.
+
 find_row_index([Row | Rest], CurrentIndex, Index) :-
     nth0(0, Row, FirstElement),
     nth0(2, Row, ThirdElement),
@@ -82,24 +81,29 @@ make_random_move(Board, NewBoard) :-
     findall([X, Y, NewX, NewY],
             legal_move(Board, X, Y, NewX, NewY), MoveList),
     length(MoveList, NumMoves),
-    NumMoves > 0,  % Ensure there are legal moves available.
+    NumMoves > 0,  
 	delete_duplicate_rows(MoveList,Steps),
-	find_row_index(Steps,Index),
+	find_row_index(Steps,Index), %Найти ход в котором можно бить
 	(-1 is Index ->
 		check_steps(Steps,NewSteps,Board),
 		delete_empty_lists(NewSteps,ClearSteps),
-		% Randomly select a move from the list of legal moves.
+
 		length(ClearSteps, NumSteps),
-		random(0, NumSteps, Index2),
+		(NumSteps = 0 ->
+			NewBoard = []
+			;
+			random(0, NumSteps, Index2),
 		
-		nth0(Index2, ClearSteps, [X, Y, NewX, NewY]),!
+			nth0(Index2, ClearSteps, [X, Y, NewX, NewY]),!,
+			apply_move(Board, X, Y, NewX, NewY, NewBoard),!
+		
+		)
+		
 		;
-		nth0(Index, Steps, [X, Y, NewX, NewY]),!
-	),
+		nth0(Index, Steps, [X, Y, NewX, NewY]),!,
+		apply_move(Board, X, Y, NewX, NewY, NewBoard),!
+	).
 
-
-    % Apply the selected move to the board.
-    apply_move(Board, X, Y, NewX, NewY, NewBoard),!.
 
 % Define the rules for a legal move in checkers.
 legal_move(Board, X, Y, NewX, NewY) :-
@@ -193,8 +197,6 @@ valid_move(Board, X, Y, NewX, NewY) :-
 
 main(Board,X) :-
     make_random_move(Board, X),!.
-
-
 
 
 

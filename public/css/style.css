@@ -246,6 +246,5 @@ body
 
 .kingPiece
 {
-  background: red;
-  background-size: cover;
+  background: red !important;
 }
